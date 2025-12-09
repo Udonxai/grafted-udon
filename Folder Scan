@@ -101,6 +101,41 @@ def a_star_decide(file_info):
 
     return "keep"
 
+# beam search
+def beam_search_decide(file_info, beam_width=3, max_depth=5):
+    # Initial state: action="keep", depth=0
+    # Beam stores tuples of (score, action, depth)
+    beam = [(heuristic(file_info), "keep", 0)]
+
+    for _ in range(max_depth):
+        candidates = []
+        for score, action, depth in beam:
+            if depth >= 1:
+                # Based on A* logic, depth 1 is where we make the decision
+                return action
+
+            for next_action in ACTIONS:
+                # In this existing logic, heuristic depends only on file_info,
+                # but we maintain the structure for beam search.
+                new_score = heuristic(file_info)
+                candidates.append((new_score, next_action, depth + 1))
+
+        if not candidates:
+            break
+
+        # Sort by score (lower is better in this heuristic)
+        # heuristic returns -score, so more negative is "better" if we want high score actions first?
+        # A* uses heapq (min heap), so it prioritizes lowest numbers (most negative).
+        candidates.sort(key=lambda x: x[0])
+
+        # Prune to beam width
+        beam = candidates[:beam_width]
+
+    # If we exit loop, return best option from current beam
+    if beam:
+        return beam[0][1]
+    return "keep"
+
 
 # Main Folder Scan
 
