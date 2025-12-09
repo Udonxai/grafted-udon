@@ -137,11 +137,11 @@ def beam_search_decide(file_info, beam_width=3, max_depth=5):
     return "keep"
 
 
-
 # Main Folder Scan
 
 
 def scan_folder(root, strategy="astar"):
+    start_time = time.time()
     print(f"Scanning: {root}\n")
 
     all_files = []
@@ -202,7 +202,7 @@ def scan_folder(root, strategy="astar"):
 
         f["similarity"] = max_sim
 
-    print(f"\n\nRunning AI {strategy.upper()} decision engine...\n") finish
+    print(f"\n\nRunning AI {strategy.upper()} decision engine...\n")
 
     results = []
     for f in files:
@@ -211,6 +211,13 @@ def scan_folder(root, strategy="astar"):
         else:
             action = a_star_decide(f)
         results.append((f["path"], action, f["age"], f["is_exact_duplicate"], f["similarity"]))
+
+    end_time = time.time()
+    duration = end_time - start_time
+    hours = int(duration // 3600)
+    minutes = int((duration % 3600) // 60)
+    seconds = duration % 60
+    print(f"\nScan completed in {hours}h {minutes}m {seconds:.2f}s")
 
     return results
 
