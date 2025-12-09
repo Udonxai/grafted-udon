@@ -101,7 +101,7 @@ def a_star_decide(file_info):
 
     return "keep"
 
-# beam search
+
 def beam_search_decide(file_info, beam_width=3, max_depth=5):
     # Initial state: action="keep", depth=0
     # Beam stores tuples of (score, action, depth)
@@ -137,10 +137,11 @@ def beam_search_decide(file_info, beam_width=3, max_depth=5):
     return "keep"
 
 
+
 # Main Folder Scan
 
 
-def scan_folder(root):
+def scan_folder(root, strategy="astar"):
     print(f"Scanning: {root}\n")
 
     all_files = []
@@ -185,7 +186,9 @@ def scan_folder(root):
     print("\nCalculating duplicate & similarity scores...")
 
     # Compute duplicates & similarity
-    for f in files:
+    total_files_count = len(files)
+    for i, f in enumerate(files):
+        progress_bar(i + 1, total_files_count, bar_length=30)
         h = f["hash"]
         f["is_exact_duplicate"] = len(hash_map[h]) > 1
 
@@ -199,11 +202,14 @@ def scan_folder(root):
 
         f["similarity"] = max_sim
 
-    print("Running AI A* decision engine...\n")
+    print(f"\n\nRunning AI {strategy.upper()} decision engine...\n") finish
 
     results = []
     for f in files:
-        action = a_star_decide(f)
+        if strategy == "beam":
+            action = beam_search_decide(f)
+        else:
+            action = a_star_decide(f)
         results.append((f["path"], action, f["age"], f["is_exact_duplicate"], f["similarity"]))
 
     return results
@@ -215,7 +221,20 @@ def scan_folder(root):
 
 if __name__ == "__main__":
     folder = os.path.expanduser("~/Downloads")
-    results = scan_folder(folder)
+    
+    print("Choose decision strategy:")
+    print("1. A* Search")
+    print("2. Beam Search")
+    
+    while True:
+        choice = input("Enter 1 or 2: ").strip()
+        if choice in ["1", "2"]:
+            break
+        print("Invalid input. Please enter 1 or 2.")
+    
+    strategy = "beam" if choice == "2" else "astar"
+    
+    results = scan_folder(folder, strategy=strategy)
 
     print("\n--- RESULTS ---")
     for path, action, age, dup, sim in results:
