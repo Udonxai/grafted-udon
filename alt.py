@@ -3,7 +3,7 @@ AI-guided storage cleanup scanner for the Downloads folder.
 
 Implements two classical AI-style approaches:
 - Rule-based inference over file metadata and hashes.
-- Greedy heuristic search scoring inspired by best-first search.
+- Greedy heuristic search scoring similar to best-first sear
 
 The tool never deletes files. It writes CSV reports for both approaches and
 an additional comparison CSV to highlight agreement/disagreement.
