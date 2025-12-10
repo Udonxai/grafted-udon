@@ -9,8 +9,6 @@ The tool never deletes files. It writes CSV reports for both approaches and
 an additional comparison CSV to highlight agreement/disagreement.
 """
 
-from __future__ import annotations
-
 import argparse
 import csv
 import hashlib
