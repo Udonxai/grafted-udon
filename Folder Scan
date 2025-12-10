@@ -102,10 +102,46 @@ def a_star_decide(file_info):
     return "keep"
 
 
+def beam_search_decide(file_info, beam_width=3, max_depth=5):
+    # Initial state: action="keep", depth=0
+    # Beam stores tuples of (score, action, depth)
+    beam = [(heuristic(file_info), "keep", 0)]
+
+    for _ in range(max_depth):
+        candidates = []
+        for score, action, depth in beam:
+            if depth >= 1:
+                # Based on A* logic, depth 1 is where we make the decision
+                return action
+
+            for next_action in ACTIONS:
+                # In this existing logic, heuristic depends only on file_info,
+                # but we maintain the structure for beam search.
+                new_score = heuristic(file_info)
+                candidates.append((new_score, next_action, depth + 1))
+
+        if not candidates:
+            break
+
+        # Sort by score (lower is better in this heuristic)
+        # heuristic returns -score, so more negative is "better" if we want high score actions first?
+        # A* uses heapq (min heap), so it prioritizes lowest numbers (most negative).
+        candidates.sort(key=lambda x: x[0])
+
+        # Prune to beam width
+        beam = candidates[:beam_width]
+
+    # If we exit loop, return best option from current beam
+    if beam:
+        return beam[0][1]
+    return "keep"
+
+
 # Main Folder Scan
 
 
-def scan_folder(root):
+def scan_folder(root, strategy="astar"):
+    start_time = time.time()
     print(f"Scanning: {root}\n")
 
     all_files = []
@@ -150,7 +186,9 @@ def scan_folder(root):
     print("\nCalculating duplicate & similarity scores...")
 
     # Compute duplicates & similarity
-    for f in files:
+    total_files_count = len(files)
+    for i, f in enumerate(files):
+        progress_bar(i + 1, total_files_count, bar_length=30)
         h = f["hash"]
         f["is_exact_duplicate"] = len(hash_map[h]) > 1
 
@@ -164,12 +202,22 @@ def scan_folder(root):
 
         f["similarity"] = max_sim
 
-    print("Running AI A* decision engine...\n")
+    print(f"\n\nRunning AI {strategy.upper()} decision engine...\n")
 
     results = []
     for f in files:
-        action = a_star_decide(f)
+        if strategy == "beam":
+            action = beam_search_decide(f)
+        else:
+            action = a_star_decide(f)
         results.append((f["path"], action, f["age"], f["is_exact_duplicate"], f["similarity"]))
+
+    end_time = time.time()
+    duration = end_time - start_time
+    hours = int(duration // 3600)
+    minutes = int((duration % 3600) // 60)
+    seconds = duration % 60
+    print(f"\nScan completed in {hours}h {minutes}m {seconds:.2f}s")
 
     return results
 
@@ -180,7 +228,20 @@ def scan_folder(root):
 
 if __name__ == "__main__":
     folder = os.path.expanduser("~/Downloads")
-    results = scan_folder(folder)
+    
+    print("Choose decision strategy:")
+    print("1. A* Search")
+    print("2. Beam Search")
+    
+    while True:
+        choice = input("Enter 1 or 2: ").strip()
+        if choice in ["1", "2"]:
+            break
+        print("Invalid input. Please enter 1 or 2.")
+    
+    strategy = "beam" if choice == "2" else "astar"
+    
+    results = scan_folder(folder, strategy=strategy)
 
     print("\n--- RESULTS ---")
     for path, action, age, dup, sim in results:
